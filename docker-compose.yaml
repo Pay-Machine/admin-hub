@@ -1,17 +1,10 @@
-# Define a versão do Docker Compose
 version: '3.8'
 
-# Define os serviços (contêineres) da sua aplicação
 services:
-  # Nome do serviço (pode ser qualquer nome)
   vending-hub-web:
-    # Nome da imagem que será usada ou construída
     image: vending-admin-hub
-    # Instrui o Docker Compose a construir a imagem a partir do Dockerfile
-    # no diretório atual (.)
     build: .
-    # Nome do contêiner que será criado
     container_name: vending-admin-container
-    # Política de reinicialização: sempre reinicia o contêiner se ele parar
-    # (útil em caso de falhas ou reinicialização da VPS)
+    ports:
+      - "8080:80"
     restart: always
