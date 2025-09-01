@@ -12,12 +12,34 @@ serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    const pathname = url.pathname;
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Pegar credenciais do header Authorization
+    // --- ROTA PÚBLICA ---
+    if (pathname === "/get-products") {
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (productsError) {
+        throw productsError;
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        data: products,
+        count: products.length,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // --- ROTAS PROTEGIDAS (mantém sua lógica de token) ---
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Token de autorização necessário' }), {
@@ -28,7 +50,6 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Validate token format
     if (!token.startsWith('vma_') || token.length < 32) {
       return new Response(JSON.stringify({ error: 'Formato de token inválido' }), {
         status: 401,
@@ -36,7 +57,6 @@ serve(async (req) => {
       });
     }
 
-    // Create token hash for validation
     const encoder = new TextEncoder();
     const tokenData = encoder.encode(token);
     const hashBuffer = await crypto.subtle.digest('SHA-256', tokenData);
@@ -44,7 +64,6 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Verificar se o token existe e está ativo
     const { data: validTokenData, error: tokenError } = await supabase
       .from('api_tokens')
       .select('user_id, is_active, permissions, expires_at')
@@ -53,14 +72,12 @@ serve(async (req) => {
       .single();
 
     if (tokenError || !validTokenData) {
-      console.error('Token validation failed:', tokenError);
       return new Response(JSON.stringify({ error: 'Token inválido ou inativo' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check token expiry
     if (validTokenData.expires_at && new Date(validTokenData.expires_at) <= new Date()) {
       return new Response(JSON.stringify({ error: 'Token expirado' }), {
         status: 401,
@@ -68,7 +85,6 @@ serve(async (req) => {
       });
     }
 
-    // Check if token has required permissions  
     if (!validTokenData.permissions.includes('webhook_receive')) {
       return new Response(JSON.stringify({ error: 'Token sem permissões necessárias' }), {
         status: 403,
@@ -76,13 +92,11 @@ serve(async (req) => {
       });
     }
 
-    // Update token last used timestamp
     await supabase
       .from('api_tokens')
       .update({ last_used_at: new Date().toISOString() })
       .eq('token_hash', tokenHash);
 
-    // Verificar se o usuário é admin/superadmin
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('user_role, approval_status')
@@ -96,29 +110,16 @@ serve(async (req) => {
       });
     }
 
-    // Buscar produtos
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (productsError) {
-      throw productsError;
-    }
-
-    return new Response(JSON.stringify({ 
-      success: true,
-      data: products,
-      count: products.length 
-    }), {
+    // aqui você coloca as rotas protegidas que precisam de auth...
+    return new Response(JSON.stringify({ success: true, message: "Acesso autorizado às rotas privadas" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in get-products function:', error);
-    return new Response(JSON.stringify({ 
+    console.error('Error in function:', error);
+    return new Response(JSON.stringify({
       error: 'Erro interno do servidor',
-      details: error.message 
+      details: error.message,
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
