@@ -1,4 +1,4 @@
-import { Beer, Package, Settings, BarChart3, User, LogOut, Users, FileText } from "lucide-react"
+import { Beer, Package, BarChart3, User, LogOut, Users, FileText } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"
@@ -20,7 +20,6 @@ import {
 const baseNavItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "Produtos", url: "/products", icon: Package },
-  { title: "Configurações", url: "/settings", icon: Settings },
 ]
 
 const superAdminNavItems = [

@@ -8,7 +8,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthProvider } from "./hooks/useAuth";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
-import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
@@ -37,7 +36,6 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/products" element={<Products />} />
-                      <Route path="/settings" element={<Settings />} />
                       <Route path="/users" element={<UserManagement />} />
                       {/* <Route path="/reports" element={<Reports />} /> */}
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
