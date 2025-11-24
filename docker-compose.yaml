@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   vending-hub-web:
-    image: vending-admin-hub
-    build: .
+    image: akierdocker/admin-hub:latest
+    # build: .
     container_name: vending-admin-container
     restart: always
     ports:
